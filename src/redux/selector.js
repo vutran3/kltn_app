@@ -1,0 +1,9 @@
+export const productSelector = state => state.product;
+export const selectHealthRows = state => state.healthCheck.rows;
+export const selectHealthLoading = state => state.healthCheck.isLoading;
+export const selectHealthPagination = state => state.healthCheck.pagination;
+export const selectHealthError = state => state.healthCheck.error;
+export const selectProductData = state => state.product.data;
+export const selectProduct = state => state.product;
+export const selectFieldData = state => state.field.data;
+export const selectDeviceData = state => state.device.data;
