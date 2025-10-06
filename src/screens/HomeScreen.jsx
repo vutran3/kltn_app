@@ -3,10 +3,10 @@ import {View, Text, TextInput, ScrollView} from 'react-native';
 import {fmtTs} from '../utils/time';
 import {getDataApi} from '../utils/fetch';
 import {DEFAULT_DEVICE_ID, POLL_MS} from '../constants/index';
-import MetricCard from '../components/MetricCard';
-import Notification from '../components/Notification';
-import CalendarWeather from '../components/CalendarWeather';
-import HistoryTable from '../components/HistoryTable';
+import MetricCard from '../components/home/MetricCard';
+import Notification from '../components/home/Notification';
+import CalendarWeather from '../components/home/CalendarWeather';
+import HistoryTable from '../components/home/HistoryTable';
 
 async function fetchLast(deviceId) {
   const res = await getDataApi(

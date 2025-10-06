@@ -401,7 +401,7 @@ function ProductsTab() {
                         : 'bg-white border-gray-300'
                     }`}>
                     <Text
-                      className={`text-center text-sm ${
+                      className={`text-center text-sm truncate ${
                         active ? 'text-white' : 'text-gray-700'
                       }`}>
                       {item.label}
@@ -439,10 +439,10 @@ function ProductsTab() {
       renderItem={({item: it}) => (
         <View className="flex-row items-center px-4 py-3 border-b border-gray-100">
           <Text className="flex-[2] text-gray-900">{it.name}</Text>
-          <Text className="flex-[2] text-gray-700">
+          {/* <Text className="flex-[2] text-gray-700">
             {typeof it.field === 'string' ? it.field : it.field?.name || '-'}
-          </Text>
-          <View className="flex-[1]">
+          </Text> */}
+          {/* <View className="flex-[1]">
             <View
               className={`self-start rounded-full px-2.5 py-0.5 ${
                 it.status === 'growing'
@@ -462,7 +462,7 @@ function ProductsTab() {
                 {it.status || '-'}
               </Text>
             </View>
-          </View>
+          </View> */}
           <Text className="flex-[1]">{it.price_per_unit ?? '-'}</Text>
           <Text className="flex-[1]">{it.weight_unit ?? '-'}</Text>
           <View className="flex-row gap-2 ml-auto">
@@ -1000,8 +1000,10 @@ export default function AgriManagerScreen() {
 
   return (
     <View className="flex-1 bg-gray-50 px-4 pt-4">
-      <Text className="text-2xl font-semibold mb-3">Quản lý Nông Sản</Text>
-      <TabNav tabs={TABS} active={active} onChange={setActive} />
+      <View>
+        <Text className="text-2xl font-semibold mb-3">Quản lý Nông Sản</Text>
+        <TabNav tabs={TABS} active={active} onChange={setActive} />
+      </View>
       <View className="flex-1">
         {active === 'products' && <ProductsTab />}
         {active === 'fields' && <FieldsTab />}

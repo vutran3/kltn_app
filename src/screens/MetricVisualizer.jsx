@@ -9,11 +9,11 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
-import TimeFilter from '../components/TimeFilter';
-import MetricChart from '../components/MetricChart';
-import Card from '../components/Card';
+import MetricChart from '../components/charts/MetricChart';
+import TimeFilter from '../components/charts/TimeFilter';
 import {getDataApi} from '../utils/fetch';
 import {mapApiRowsToSeries} from '../utils/map';
+import Card from '../components/charts/Card';
 
 const DEVICE_ID = 'esp32s3-01';
 
@@ -121,11 +121,56 @@ export default function MetricVisualizer() {
         />
 
         <MetricChart
-          title="BIỂU ĐỒ LƯỢNG MƯA"
-          type="line"
+          title="BIỂU ĐỒ ĐỘ ẨM KHÔNG KHÍ"
+          type="air"
           data={data}
-          series={[{key: 'rain', name: 'Mưa (0/1)'}]}
+          series={[{key: 'air', name: 'Độ ẩm (%)'}]}
+          yUnit="%"
+          height={288}
+        />
+
+        <MetricChart
+          title="BIỂU ĐỒ ĐỘ PH"
+          type="ph"
+          data={data}
+          series={[{key: 'ph', name: 'Độ pH'}]}
           yUnit=""
+          height={288}
+        />
+
+        <MetricChart
+          title="BIỂU ĐỒ LƯỢNG PHOTPHO"
+          type="photpho"
+          data={data}
+          series={[{key: 'photpho', name: 'Lượng Photpho (mg/kg)'}]}
+          yUnit="mg/kg"
+          height={288}
+        />
+
+        <MetricChart
+          title="BIỂU ĐỒ LƯỢNG NITO"
+          type="nitro"
+          data={data}
+          series={[{key: 'nitro', name: 'Lượng Nito (mg/kg)'}]}
+          yUnit="mg/kg"
+          height={288}
+        />
+
+        <MetricChart
+          title="BIỂU ĐỒ LƯỢNG KALI"
+          type="kali"
+          data={data}
+          series={[{key: 'kali', name: 'Lượng Kali (mg/kg)'}]}
+          yUnit="mg/kg"
+          height={288}
+        />
+
+        <MetricChart
+          title="BIỂU ĐỒ ĐỘ ẨM ĐẤT"
+          type="soilHum"
+          data={data}
+          series={[{key: 'soilHum', name: 'Độ ẩm đất (%)'}]}
+          yUnit="%"
           height={288}
         />
       </ScrollView>
