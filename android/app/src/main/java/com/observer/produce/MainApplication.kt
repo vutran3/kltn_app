@@ -1,4 +1,4 @@
-package com.chattingapp
+package com.observer.produce
 
 import android.app.Application
 import com.facebook.react.PackageList

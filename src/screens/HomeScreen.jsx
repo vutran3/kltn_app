@@ -1,23 +1,27 @@
-import React, {useEffect, useState} from 'react';
-import {View, Text, TextInput, ScrollView} from 'react-native';
-import {fmtTs} from '../utils/time';
-import {getDataApi} from '../utils/fetch';
-import {DEFAULT_DEVICE_ID, POLL_MS} from '../constants/index';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, ScrollView, Pressable } from 'react-native';
+import { fmtTs } from '../utils/time';
+import { getDataApi } from '../utils/fetch';
+import { DEFAULT_DEVICE_ID, POLL_MS } from '../constants/index';
+import { useDispatch, useSelector } from 'react-redux';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import MetricCard from '../components/home/MetricCard';
 import Notification from '../components/home/Notification';
 import CalendarWeather from '../components/home/CalendarWeather';
 import HistoryTable from '../components/home/HistoryTable';
-
+import { selectUnread } from '../redux/selector';
+import { fetchNotification } from '../redux/thunks/notificationThunk';
 async function fetchLast(deviceId) {
   const res = await getDataApi(
     `/readings/last`,
-    {deviceId},
-    {cache: 'no-store'},
+    { deviceId },
+    { cache: 'no-store' },
   );
   return res?.data?.data?.last ?? null;
 }
 
 export default function HomeScreen() {
+  const dispatch = useDispatch();
   const [deviceId, setDeviceId] = useState(DEFAULT_DEVICE_ID);
   const [last, setLast] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -49,10 +53,11 @@ export default function HomeScreen() {
     loadData(deviceId);
     const id = setInterval(() => loadData(deviceId), POLL_MS);
     return () => clearInterval(id);
-  }, [deviceId]);
+  }, [deviceId, dispatch]);
 
   return (
     <ScrollView className="flex-1 bg-[#F5F7FB] p-3">
+    
       {/* Header: Device & Status */}
       <View className="bg-white rounded-xl p-4 mb-3">
         <View className="flex-row items-center justify-between">

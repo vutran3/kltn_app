@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "121945128033",
+    "project_id": "observerproduce-app",
+    "storage_bucket": "observerproduce-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:121945128033:android:ddffd6787f912658873e20",
+        "android_client_info": {
+          "package_name": "com.observer.produce"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDeEzYwdGrad4jSyLHqq3lX-vpdOuCTmpw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

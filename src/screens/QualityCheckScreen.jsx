@@ -1,56 +1,25 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {View, ScrollView, StyleSheet, SafeAreaView} from 'react-native';
-import {RefreshCcw} from 'lucide-react-native';
-import Card from '../components/quality/Card';
-import TimeFilter from '../components/shared/TimeFilter';
-import QualityList from '../components/quality/QualityList';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { useRoute } from '@react-navigation/native';
+import { RefreshCcw } from 'lucide-react-native';
 import instance from '../config/axios.config';
-import AppButton from '../components/quality/primitives/AppButton';
 
-const fmtVN = iso => {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return d.toLocaleString('vi-VN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
-};
+import Card from '../components/quality/Card';
+import EmptyState from '../components/quality/EmptyState';
+import TimeFilter from '../components/quality/TimeFilter';
+import Row from '../components/quality/Row';
+import Pagination from '../components/quality/Pagination';
 
-function mapResults(results, page, limit) {
-  return results.map((item, idx) => {
-    const ai = item?.ai_prediction || {};
-    const originalUrl = item?.image_predetect?.image_url || '';
-    const annotatedB64 = item?.ai_prediction?.annotated_image_base64;
-    const detectedUrl = annotatedB64
-      ? `data:image/png;base64,${annotatedB64}`
-      : originalUrl;
-
-    const aiMessage =
-      item?.predicting_description ||
-      item?.ai_prediction?.prediction_text ||
-      '';
-
-    return {
-      id: item?._id || `${page}-${idx}`,
-      no: (page - 1) * (limit || 0) + idx + 1,
-      originalUrl,
-      detectedUrl,
-      capturedAt: fmtVN(item?.inspection_date),
-      aiMessage,
-      boxes: ai?.boxes || [],
-      originalSize: {
-        width: ai?.image_width || item?.image_predetect?.width || 0,
-        height: ai?.image_height || item?.image_predetect?.height || 0,
-      },
-    };
-  });
-}
+import { mapResults, mapOne } from '../utils/mapQuality'; // giữ mapper như bạn đang dùng
 
 export default function QualityCheckScreen() {
-  const [range, setRange] = useState({from: null, to: null});
+  const route = useRoute();
+  const initialHcid = route?.params?.hcid || route?.params?.healthCheckId || null;
+
+  // mode: 'single' (xem hcid) | 'list' (lọc theo thời gian)
+  const [mode, setMode] = useState(initialHcid ? 'single' : 'list');
+
+  const [range, setRange] = useState({ from: null, to: null });
   const [loading, setLoading] = useState(false);
 
   const [rows, setRows] = useState([]);
@@ -58,103 +27,118 @@ export default function QualityCheckScreen() {
   const [limit, setLimit] = useState(5);
   const [totalPages, setTotalPages] = useState(1);
 
-  const fetchPage = useCallback(
-    async (p = 1, from = null, to = null) => {
-      setLoading(true);
-      const controller = new AbortController();
-      const deviceId = 'esp32s3-01';
-      try {
-        const params = {page: p};
-        // nếu backend có hỗ trợ lọc thời gian, truyền kèm ISO
-        if (from) params.from = new Date(from).toISOString();
-        if (to) params.to = new Date(to).toISOString();
-        if (deviceId) params.deviceId = deviceId;
-        const {data} = await instance.get('/health-check/results', {
-          params,
-          signal: controller.signal,
-          timeout: 30000,
-          headers: {Accept: 'application/json'},
-        });
+  const fetchList = useCallback(async (p = 1, from = null, to = null) => {
+    setLoading(true);
+    try {
+      const params = { page: p, limit: 5, deviceId: 'esp32-01' };
+      if (from) params.from = new Date(from).toISOString();
+      if (to) params.to = new Date(to).toISOString();
 
-        const meta = data?.metadata || {};
-        const results = meta?.results || [];
-        const pag = meta?.pagination || {};
-        const mapped = mapResults(results, pag.page || p, pag.limit || limit);
-        setRows(mapped);
-        setPage(pag.page || p);
-        setLimit(pag.limit || limit);
-        setTotalPages(pag.totalPages || 1);
-      } catch (err) {
-        // if (instance.isCancel(err)) {
-        // } else {
-        //     console.error("Fetch results failed:", err?.message || err);
-        //     setRows([]);
-        //     setTotalPages(1);
-        // }
-      } finally {
-        setLoading(false);
-      }
+      const { data } = await instance.get('/health-check/results', {
+        params, headers: { Accept: 'application/json' }, timeout: 30000
+      });
 
-      // return cleanup để hủy nếu component unmount
-      return () => controller.abort();
-    },
-    [limit],
-  );
+      const meta = data?.metadata || {};
+      const results = meta?.results || data?.results || [];
+      const pag = meta?.pagination || {};
 
+      const mapped = mapResults(results, pag.page || p, pag.limit || limit);
+      setRows(mapped);
+      setPage(pag.page || p);
+      setLimit(pag.limit || limit);
+      setTotalPages(pag.totalPages || 1);
+    } catch (e) {
+      setRows([]); setTotalPages(1);
+    } finally {
+      setLoading(false);
+    }
+  }, [limit]);
+
+  const fetchOne = useCallback(async (id) => {
+    if (!id) return;
+    setLoading(true);
+    try {
+      const { data } = await instance.get(`/health-check/get/${id}`, {
+        headers: { Accept: 'application/json' }, timeout: 30000
+      });
+      const record = data?.data || data?.metadata || data?.record || data?.result || data;
+      const mapped = mapOne(record);
+      setRows(mapped);
+      setPage(1); setLimit(1); setTotalPages(1);
+    } catch (e) {
+      Alert.alert('Lỗi', 'Không tải được bản ghi.');
+      setRows([]); setPage(1); setLimit(1); setTotalPages(1);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // mount / khi mode đổi
   useEffect(() => {
-    const cleanup = fetchPage(1);
-    return () => {
-      if (typeof cleanup === 'function') cleanup();
-    };
-  }, [fetchPage]);
-
-  const handleFilter = async (from, to) => {
-    setRange({from, to});
-    await fetchPage(1, from, to);
-  };
-
-  const handlePage = async p => {
-    setPage(p);
-    await fetchPage(p, range.from, range.to);
-  };
+    if (mode === 'single' && initialHcid) fetchOne(initialHcid);
+    else fetchList(1, range.from, range.to);
+  }, [mode, initialHcid, range.from, range.to, fetchOne, fetchList]);
 
   const actions = (
-    <AppButton
-      variant="outline"
-      onPress={() => fetchPage(page, range.from, range.to)}
-      icon={<RefreshCcw size={18} style={{marginRight: 8}} />}
-      label="Làm mới"
-      height={40}
-      paddingH={12}
-    />
+    <TouchableOpacity
+      onPress={() => (mode === 'single' ? fetchOne(initialHcid) : fetchList(page, range.from, range.to))}
+      activeOpacity={0.9}
+      className="h-10 px-3 rounded-xl border bg-white flex-row items-center"
+    >
+      <RefreshCcw size={16} color="#0f172a" />
+      <Text className="ml-2 text-slate-700">Làm mới</Text>
+    </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: '#F8FAFC'}}>
-      <View style={styles.container}>
-        <Card title="Kiểm tra chất lượng nông sản" actions={actions}>
-          <QualityList
-            data={rows}
-            loading={loading}
-            page={page}
-            totalPages={totalPages}
-            onPage={handlePage}
-            headerComponent={
-              <TimeFilter
-                onFilter={handleFilter}
-                onReset={() => {
-                  setRange({from: null, to: null});
-                  fetchPage(1);
-                }}
-              />
-            }
-          />
+    <ScrollView className="flex-1 bg-slate-50 p-4">
+      <TimeFilter
+        disabled={loading}
+        onFilter={(from, to) => {
+          // chuyển sang list mode để lọc theo thời gian, dù mở từ hcid
+          setMode('list');
+          setRange({ from, to });
+          setPage(1);
+          fetchList(1, from, to);
+        }}
+        onReset={() => {
+          setMode('list');
+          setRange({ from: null, to: null });
+          setPage(1);
+          fetchList(1);
+        }}
+      />
+
+      <View className="mt-4">
+        <Card
+          title={mode === 'single' ? 'Chi tiết kiểm tra chất lượng' : 'Kiểm tra chất lượng nông sản'}
+          subtitle={mode === 'single' ? `HCID: ${initialHcid}` : undefined}
+          actions={actions}
+        >
+          {loading && (
+            <View className="py-6 items-center">
+              <ActivityIndicator />
+              <Text className="text-slate-600 mt-2">Đang tải…</Text>
+            </View>
+          )}
+
+          {!loading && rows.length === 0 && <EmptyState />}
+
+          {!loading && rows.length > 0 && (
+            <View className="rounded-2xl border border-slate-200 bg-white/90">
+              {rows.map((r) => <Row key={r.id} row={r} />)}
+              {mode === 'list' && (
+                <Pagination
+                  page={page}
+                  totalPages={totalPages}
+                  onPrev={() => page > 1 && fetchList(page - 1, range.from, range.to)}
+                  onNext={() => page < totalPages && fetchList(page + 1, range.from, range.to)}
+                />
+              )}
+            </View>
+          )}
         </Card>
       </View>
-    </SafeAreaView>
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {padding: 16, gap: 16},
-});

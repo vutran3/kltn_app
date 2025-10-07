@@ -7,3 +7,6 @@ export const selectProductData = state => state.product.data;
 export const selectProduct = state => state.product;
 export const selectFieldData = state => state.field.data;
 export const selectDeviceData = state => state.device.data;
+export const selectNotif = (s) => s.notification;
+export const selectUnread = (s) => s.notification.unread;
+export const selectList   = (s) => s.notification.list;
